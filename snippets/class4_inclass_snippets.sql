@@ -1,8 +1,8 @@
 -- =====================================================================
 --  SQL CLASS 4  |  Every query from the class, in order, with explanations
 --  Topics: 10 practice questions on joins and set operations, then
---          subqueries: a query inside a query (WHERE, IN, NOT IN, EXISTS,
---          NOT EXISTS), and a 30-question practice set at the end
+--          subqueries: a query inside a query (WHERE, IN, NOT IN),
+--          and a 20-question practice set at the end
 -- =====================================================================
 --  HOW TO USE THIS FILE
 --  1. Run setup/class4_setup.sql first.
@@ -268,7 +268,7 @@ SELECT 3 NOT IN (1, 2) AS normal_list, 3 NOT IN (1, NULL) AS list_with_empty_box
 -- B5c THE FIX: leave the empty box out of the list.
 --     Expect: 6 rows (Priya, Kiran, Meena, Divya, Nisha, Deepa)
 --     Rule: before writing NOT IN, ask "can this list contain an empty box?". If yes, add
---     WHERE ... IS NOT NULL inside the brackets, or use NOT EXISTS (Part D).
+--     WHERE ... IS NOT NULL inside the brackets.
 SELECT student_name FROM students
 WHERE student_id NOT IN (SELECT student_id FROM payments WHERE student_id IS NOT NULL)
 ORDER BY student_id;
@@ -305,141 +305,10 @@ ORDER BY student_id;
 
 
 -- =====================================================================
---  PART D  |  EXISTS and NOT EXISTS
---  EXISTS asks one question: "is there at least one matching row?"
---  Picture: go down the register one name at a time; for each name, flip
---  through the receipt book: is there ANY receipt with this ID? Yes -> keep
---  the name. No -> skip it.
---  Two things to notice in the query: the inner query mentions the outer
---  table (p.student_id = s.student_id), which is the link, "a payment for
---  THIS student"; and SELECT 1 inside, because we only want to know whether
---  any row comes back, not what is in it.
--- =====================================================================
-
--- D1  Students who have paid.
---     Expect: 6 rows (Anu, Rahul, John, Sara, Arjun, Ravi). Anu once: one receipt is enough.
-SELECT s.student_name
-FROM students s
-WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id)
-ORDER BY s.student_id;
-
--- D2  Students who have NOT paid. The empty box on payment 8 does no harm here: for Priya (3),
---     the inner query looks for payments with student_id = 3; payment 8's empty box is simply
---     not equal to 3, so it is not found; nothing found -> NOT EXISTS is true -> Priya is kept.
---     Expect: 6 rows (Priya, Kiran, Meena, Divya, Nisha, Deepa)
---     NOT EXISTS is the safe way to write "who has not", whether or not the other table has empty boxes.
-SELECT s.student_name
-FROM students s
-WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id)
-ORDER BY s.student_id;
-
--- D3  Courses with no students.
---     Expect: 1 row (Cloud Computing)
-SELECT c.course_name
-FROM courses c
-WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id);
-
--- D4  Customers with no orders. Order 104's empty customer_id does no harm.
---     Expect: 2 rows (Sara, John)
-SELECT c.customer_name
-FROM customers c
-WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)
-ORDER BY c.customer_id;
-
--- D5  THE MISTAKE: forget the link, and the inner question becomes "is there any payment at
---     all in the table?". Yes, eight. So the answer is yes for every student.
---     Expect: 12 rows (everyone)
---     If EXISTS returns everyone, check the link.
-SELECT s.student_name
-FROM students s
-WHERE EXISTS (SELECT 1 FROM payments p)
-ORDER BY s.student_id;
-
--- D6  TRY IT YOURSELF: students with at least one Completed enrollment. The inner query
---     can have more conditions than just the link.
---     Expect: 2 rows (John, Meena)
-SELECT s.student_name
-FROM students s
-WHERE EXISTS (SELECT 1 FROM enrollments e
-              WHERE e.student_id = s.student_id AND e.status = 'Completed')
-ORDER BY s.student_id;
-
--- D7  EXTRA CHALLENGE: courses that have at least one student.
---     Expect: 5 rows (all except Cloud Computing)
-SELECT c.course_name
-FROM courses c
-WHERE EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id)
-ORDER BY c.course_id;
-
--- D8  THREE WAYS, ONE ANSWER: students who have not paid. Run all three.
---     Expect: the same 6 names each time (Priya, Kiran, Meena, Divya, Nisha, Deepa)
---     1. LEFT JOIN + IS NULL: can also show columns from payments.
---     2. NOT IN: shortest, but only safe when the list has no empty boxes.
---     3. NOT EXISTS: always safe.
-SELECT s.student_name FROM students s
-LEFT JOIN payments p ON s.student_id = p.student_id
-WHERE p.payment_id IS NULL ORDER BY s.student_id;
-
-SELECT student_name FROM students
-WHERE student_id NOT IN (SELECT student_id FROM payments WHERE student_id IS NOT NULL)
-ORDER BY student_id;
-
-SELECT s.student_name FROM students s
-WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id)
-ORDER BY s.student_id;
-
-
--- =====================================================================
---  PART E  |  Two more places a subquery can go: as a table, as a column
--- =====================================================================
-
--- E1  A query result used as a TABLE. The inner query makes a five-row table of city totals,
---     nicknamed city_totals; the outer query filters it like any table.
---     Expect: 3 rows (Chennai 36000, Mumbai 34000, Bangalore 33000)
-SELECT city, total_fees
-FROM (SELECT city, SUM(fees) AS total_fees
-      FROM students WHERE city IS NOT NULL
-      GROUP BY city) AS city_totals
-WHERE total_fees > 32000
-ORDER BY total_fees DESC;
-
--- E2  Something HAVING cannot do: the average of the five city totals. First make the
---     totals, then average them. Two steps, one query.
---     Expect: 30800.00   ((36000 + 34000 + 33000 + 31000 + 20000) / 5)
-SELECT ROUND(AVG(total_fees), 2) AS average_city_total
-FROM (SELECT city, SUM(fees) AS total_fees
-      FROM students WHERE city IS NOT NULL
-      GROUP BY city) AS city_totals;
-
--- E3  A one-value query used as a COLUMN. Every row shows the same average next to its own fee.
---     Expect: 12 rows (Anu 12000, 14083, -2083; Rahul 15000, 14083, 917; ...)
-SELECT student_name, fees,
-       (SELECT ROUND(AVG(fees)) FROM students) AS average_fee,
-       fees - (SELECT ROUND(AVG(fees)) FROM students) AS difference
-FROM students
-ORDER BY student_id;
-
--- E4  A column that looks at THIS row: the number of payments per student. The link
---     p.student_id = s.student_id again. Counting nothing gives 0, so no COALESCE is needed.
---     Expect: 12 rows (Anu 2, Rahul 1, Priya 0, John 1, Sara 1, Kiran 0, ...)
-SELECT s.student_name,
-       (SELECT COUNT(*) FROM payments p WHERE p.student_id = s.student_id) AS payments
-FROM students s
-ORDER BY s.student_id;
-
-
--- =====================================================================
 --  PART F  |  Final questions
 -- =====================================================================
 
--- F1  Names of the students who have not paid, using NOT EXISTS, A to Z.
---     Expect: 6 rows (Deepa, Divya, Kiran, Meena, Nisha, Priya)
-SELECT s.student_name
-FROM students s
-WHERE NOT EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id)
-ORDER BY s.student_name;
-
--- F2  EXTRA CHALLENGE: students who pay more than Anu.
+-- F1  Students who pay more than Anu.
 --     Expect: 7 rows (Meena 14000; Deepa, Priya, Rahul 15000; Divya 16000; Kiran 18000; Arjun 20000)
 SELECT student_name, fees FROM students
 WHERE fees > (SELECT fees FROM students WHERE student_name = 'Anu')
@@ -447,7 +316,7 @@ ORDER BY fees, student_name;
 
 
 -- =====================================================================
---  PRACTICE SET  |  30 questions with answers
+--  PRACTICE SET  |  20 questions with answers
 --  Cover the answer, write your own query, then compare. Row counts are
 --  given so you can check yourself before looking.
 --
@@ -471,20 +340,11 @@ ORDER BY fees, student_name;
 --    P16 Students who live in the same city as Kiran.                           (2 rows)
 --    P17 Students who live in a city with more than two students.               (6 rows)
 --    P18 Students with at least one Active enrollment, using IN.                (8 rows)
---  Level 3 - EXISTS and NOT EXISTS
---    P19 Students with at least one payment, using EXISTS.                      (6 rows)
---    P20 Students with no enrollment, using NOT EXISTS.                         (2 rows)
---    P21 Courses with at least one Completed enrollment.                        (2 rows)
---    P22 Customers who have placed an order of more than 400.                   (2 rows)
---    P23 Students with at least one VERIFIED payment.                           (4 rows)
---    P24 Students who have paid, but none of their payments is verified.        (2 rows)
---  Level 4 - harder
---    P25 Students whose fee is above the average fee of THEIR OWN city.         (4 rows)
---    P26 Each student with the number of courses they take (subquery in SELECT). (12 rows)
---    P27 The average of the five city totals (subquery in FROM).                (1 row)
---    P28 Students with more than one payment.                                   (1 row)
---    P29 "Students who have not paid" three ways: see D8.                       (6 rows each)
---    P30 Spot the mistake in each of the three statements at the end.
+--  Level 3 - check yourself
+--    P19 "Students who have not paid" two ways: LEFT JOIN + IS NULL, and NOT IN.  (6 rows each)
+--    P20 Spot the mistake in each of the two statements at the end.
+-- =====================================================================
+
 -- =====================================================================
 
 -- P1  Expect: 6 rows (John 10000; Nisha, Ravi 11000; Anu, Sara 12000; Meena 14000)
@@ -569,73 +429,21 @@ ORDER BY city, student_id;
 SELECT student_name FROM students
 WHERE student_id IN (SELECT student_id FROM enrollments WHERE status = 'Active') ORDER BY student_id;
 
--- P19 Expect: 6 rows (Anu, Rahul, John, Sara, Arjun, Ravi)
+-- P19 Two ways, same six names (Priya, Kiran, Meena, Divya, Nisha, Deepa). Run both.
 SELECT s.student_name FROM students s
-WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id) ORDER BY s.student_id;
+LEFT JOIN payments p ON s.student_id = p.student_id
+WHERE p.payment_id IS NULL ORDER BY s.student_id;
 
--- P20 Expect: 2 rows (Nisha, Deepa)
-SELECT s.student_name FROM students s
-WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id) ORDER BY s.student_id;
+SELECT student_name FROM students
+WHERE student_id NOT IN (SELECT student_id FROM payments WHERE student_id IS NOT NULL)
+ORDER BY student_id;
 
--- P21 Expect: 2 rows (SQL, Java)
-SELECT c.course_name FROM courses c
-WHERE EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id AND e.status = 'Completed')
-ORDER BY c.course_id;
-
--- P22 Expect: 2 rows (Anu with the Book 500, Ravi with the Bag 900)
-SELECT c.customer_name FROM customers c
-WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount > 400)
-ORDER BY c.customer_id;
-
--- P23 Expect: 4 rows (Anu, Rahul, John, Arjun)
-SELECT s.student_name FROM students s
-WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id AND p.is_verified)
-ORDER BY s.student_id;
-
--- P24 EXISTS ... AND NOT EXISTS ...: has a payment, but has no verified payment.
---     Expect: 2 rows (Sara, Ravi)
-SELECT s.student_name FROM students s
-WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id)
-  AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.student_id = s.student_id AND p.is_verified)
-ORDER BY s.student_id;
-
--- P25 The inner query looks at the outer row's city (x.city = s.city), so it is answered
---     once per student. City averages: Bangalore 16500, Chennai 12000, Hyderabad 15500,
---     Mumbai 11333.33, Delhi 20000. Arjun equals his city's average (he is alone), so > leaves
---     him out. Deepa's city is empty, so her inner query finds nobody.
---     Expect: 4 rows (Kiran 18000, Meena 14000, Divya 16000, Sara 12000)
-SELECT s.student_name, s.city, s.fees
-FROM students s
-WHERE s.fees > (SELECT AVG(x.fees) FROM students x WHERE x.city = s.city)
-ORDER BY s.city;
-
--- P26 Expect: 12 rows (Anu 2, Rahul 2, then 1 each, Nisha 0, Deepa 0)
-SELECT s.student_name,
-       (SELECT COUNT(*) FROM enrollments e WHERE e.student_id = s.student_id) AS courses
-FROM students s ORDER BY s.student_id;
-
--- P27 Expect: 30800.00
-SELECT ROUND(AVG(total_fees), 2) AS average_city_total
-FROM (SELECT city, SUM(fees) AS total_fees
-      FROM students WHERE city IS NOT NULL GROUP BY city) AS city_totals;
-
--- P28 A COUNT subquery used in a comparison.
---     Expect: 1 row (Anu)
-SELECT s.student_name FROM students s
-WHERE (SELECT COUNT(*) FROM payments p WHERE p.student_id = s.student_id) > 1;
-
--- P29 See D8 above: the three queries each give the same 6 names.
-
--- P30 Spot the mistake. Run each one and see.
+-- P20 Spot the mistake. Run each one and see.
 --     (a) FAILS ON PURPOSE: the brackets return three fees, but > needs exactly one.
 --         Expect: ERROR: more than one row returned by a subquery used as an expression
 --         Fix: use MAX/MIN/AVG inside, or use IN.
 SELECT student_name FROM students WHERE fees > (SELECT fees FROM students WHERE city = 'Chennai');
 
 --     (b) The list contains payment 8's empty box, so NOT IN can never say a definite yes.
---         Expect: 0 rows.  Fix: add WHERE student_id IS NOT NULL inside, or use NOT EXISTS.
+--         Expect: 0 rows.  Fix: add WHERE student_id IS NOT NULL inside the brackets.
 SELECT student_name FROM students WHERE student_id NOT IN (SELECT student_id FROM payments);
-
---     (c) The link to the outer row is missing, so EXISTS is true for every student.
---         Expect: 12.  Fix: add WHERE p.student_id = s.student_id inside.
-SELECT COUNT(*) FROM students s WHERE EXISTS (SELECT 1 FROM payments p);
