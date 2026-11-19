@@ -18,7 +18,7 @@ Click the green **Code** button at the top of this page → **Download ZIP**. Un
 |---|---|
 | `notes/SQL_NOTES_CLASSES_1_2.pdf` | SELECT, WHERE, ORDER BY, LIMIT, COUNT/SUM/AVG/MIN/MAX, GROUP BY, HAVING, CASE, NULL and COALESCE, text/number/date functions, data types, CREATE/ALTER/DROP, constraints. 10 practice questions with answers. |
 | `notes/SQL_NOTES_JOINS_SET_OPERATIONS.pdf` | INNER, LEFT, RIGHT, FULL JOIN, LEFT JOIN + IS NULL, self join, designing tables for joins, CROSS JOIN, UNION, UNION ALL, INTERSECT, EXCEPT. 40 practice questions with answers. |
-| `notes/SQL_NOTES_SUBQUERIES.pdf` | Subqueries: a query inside a query with =, >, <; IN and NOT IN (and the NULL trap); EXISTS and NOT EXISTS; three ways to write "who has not". 30 practice questions with answers. |
+| `notes/SQL_NOTES_SUBQUERIES.pdf` | Subqueries: a query inside a query with =, >, <; IN and NOT IN (and the NULL trap); two ways to write "who has not". 20 practice questions with answers. |
 
 ## Setting up the tables (do this once, and again whenever your tables break)
 
@@ -50,7 +50,7 @@ Do not run the whole file at once. Some lines are marked `EXPECT ERROR` on purpo
 |---|---|---|---|---|
 | 2 | WHERE toolbox, data types, constraints, ALTER/DROP, NULL, COALESCE, joins, self join | `class2_setup.sql` | `snippets/class2_inclass_snippets.sql` | Notes 1 and Notes 2 |
 | 3 | Joins from scratch, table design, CROSS JOIN, UNION, INTERSECT, EXCEPT | `class3_setup.sql` | `snippets/class3_inclass_snippets.sql` | Notes 2 |
-| 4 | Subqueries: WHERE, IN, NOT IN, EXISTS, NOT EXISTS | `class4_setup.sql` | `snippets/class4_inclass_snippets.sql` (practice set at the bottom) | Notes 3 (Subqueries) |
+| 4 | Subqueries: WHERE, IN, NOT IN | `class4_setup.sql` | `snippets/class4_inclass_snippets.sql` (practice set at the bottom) | Notes 3 (Subqueries) |
 
 ## Three rules for pgAdmin
 
