@@ -21,17 +21,18 @@ Click the green **Code** button at the top of this page → **Download ZIP**. Un
 | `notes/SQL_NOTES_SUBQUERIES.pdf` | Subqueries: a query inside a query with =, >, <; IN and NOT IN (and the NULL trap); two ways to write "who has not". 20 practice questions with answers. |
 | `notes/SQL_NOTES_EXISTS_CTES.pdf` | EXISTS and NOT EXISTS; a subquery as a table and as a column; CTEs (WITH): one CTE, a CTE used twice, several CTEs, CTE + join. 20 practice questions with answers. |
 | `notes/SQL_NOTES_WINDOW_FUNCTIONS_1.pdf` | Window functions, part 1: what OVER ( ) does, ROW_NUMBER with a tie-breaker, RANK and DENSE_RANK on ties, using a rank with a CTE (top N, Nth highest). 20 practice questions with answers. |
+| `notes/SQL_NOTES_WINDOW_FUNCTIONS_2.pdf` | Window functions, part 2: PARTITION BY (per-group totals, ranks, top one per group), running totals with ORDER BY inside OVER, LAG (previous row, change from the previous row, days between events). 18 practice questions with answers. |
 
 ## Setting up the tables (do this once, and again whenever your tables break)
 
 1. Open pgAdmin → **Servers → PostgreSQL 17** → enter the password you chose when you installed PostgreSQL.
 2. If you do not have a database called `sql_class` yet: right-click **Databases → Create → Database**, name it `sql_class`, Save.
 3. Click `sql_class` once so it is highlighted → menu **Tools → Query Tool**. The tab title must show `sql_class`.
-4. Open `setup/class6_setup.sql` in Notepad, select all, copy, paste into the Query Tool.
+4. Open `setup/class7_setup.sql` in Notepad, select all, copy, paste into the Query Tool.
 5. Press **F5**. The Messages tab says *Query returned successfully*.
 6. Right-click **Tables → Refresh**. You should see: students, courses, enrollments, payments, customers, orders, orders_bad, shirts, trousers, morning_batch, evening_batch.
 
-`class6_setup.sql` builds the **current** state of all tables and is safe to run as many times as you like. The older files are kept only if you want to replay an earlier class exactly as it was:
+`class7_setup.sql` builds the **current** state of all tables and is safe to run as many times as you like. The older files are kept only if you want to replay an earlier class exactly as it was:
 
 | Setup file | Builds the tables as they were at |
 |---|---|
@@ -39,7 +40,8 @@ Click the green **Code** button at the top of this page → **Download ZIP**. Un
 | `setup/class3_setup.sql` | the start of class 3 (same as classes 4 and 5) |
 | `setup/class4_setup.sql` | the start of class 4 (same as class 5) |
 | `setup/class5_setup.sql` | the start of class 5 (same as class 6) |
-| `setup/class6_setup.sql` | the start of class 6 — **use this one** |
+| `setup/class6_setup.sql` | the start of class 6 (same as class 7) |
+| `setup/class7_setup.sql` | the start of class 7 — **use this one** |
 
 ## Replaying a class with the snippets
 
@@ -57,6 +59,7 @@ Do not run the whole file at once. Some lines are marked `EXPECT ERROR` on purpo
 | 4 | Subqueries: WHERE, IN, NOT IN | `class4_setup.sql` | `snippets/class4_inclass_snippets.sql` (practice set at the bottom) | Notes 3 (Subqueries) |
 | 5 | EXISTS, NOT EXISTS, subquery as a table / column, CTEs (WITH) | `class5_setup.sql` | `snippets/class5_inclass_snippets.sql` (practice set at the bottom) | Notes 4 (EXISTS and CTEs) |
 | 6 | Window functions part 1: OVER, ROW_NUMBER, RANK, DENSE_RANK, top N with a CTE | `class6_setup.sql` | `snippets/class6_inclass_snippets.sql` (practice set at the bottom) | Notes 5 (Window Functions 1) |
+| 7 | Window functions part 2: PARTITION BY, running totals, LAG | `class7_setup.sql` | `snippets/class7_inclass_snippets.sql` (practice set at the bottom) | Notes 6 (Window Functions 2) |
 
 ## Three rules for pgAdmin
 
@@ -68,7 +71,7 @@ Do not run the whole file at once. Some lines are marked `EXPECT ERROR` on purpo
 
 | You see | Do this |
 |---|---|
-| `relation "students" does not exist` | Check the tab title says `sql_class`, then run `class6_setup.sql` again |
-| `duplicate key value violates unique constraint` when running a snippet | The row already exists. Run `class6_setup.sql` to reset, then try again |
+| `relation "students" does not exist` | Check the tab title says `sql_class`, then run `class7_setup.sql` again |
+| `duplicate key value violates unique constraint` when running a snippet | The row already exists. Run `class7_setup.sql` to reset, then try again |
 | Nothing appears after F5 | You are on the Messages tab. Click Data Output |
-| A result does not match the comment | Run `class6_setup.sql` to reset the data, then re-run the statement |
+| A result does not match the comment | Run `class7_setup.sql` to reset the data, then re-run the statement |
